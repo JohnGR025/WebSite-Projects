@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moving Particles</title>
+    <style>
+        body{
+            background-color: blanchedalmond;
+            margin: 0;
+            cursor: move;
+        }
+    </style>
+</head>
+<body>
+    <canvas></canvas>
+</body>
+<script>
+    let red, blue, green, opacity=0;
+    let x, y, radius=5, radians=0, velocity, traceCos, traceSin;
+    let particles = [], pCount=30;
+
+    const canvas = document.querySelector('canvas');
+    canvas.width = window.innerWidth-6;
+    canvas.height = window.innerHeight-6;
+    const c = canvas.getContext('2d');
+
+    //Event listeners for the following of the particles 
+    let mouse = {x:undefined, y:undefined};
+    window.addEventListener('mousemove', (event) => {
+        // If mouse was undefined, instantly set lastMouse for all particles
+        if (mouse.x === undefined || mouse.y === undefined) {
+            particles.forEach(p => {
+                p.lastMouse.x = event.clientX;
+                p.lastMouse.y = event.clientY;
+            });
+        }
+        mouse.x = event.clientX;
+        mouse.y = event.clientY;
+    });
+    window.addEventListener('mouseout', (event) => {
+        if (!event.relatedTarget || event.relatedTarget.nodeName === "HTML") {
+            mouse.x = undefined;
+            mouse.y = undefined;
+        }
+    });
+
+    function Particle(x, y, radius, radians, velocity, traceCos, traceSin, red, green, blue, opacity) {
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.radians = radians;
+        this.velocity = velocity;
+        this.traceCos = traceCos;
+        this.traceSin = traceSin;
+        this.opacity = opacity;
+        this.lastMouse = {x:x, y:y};
+        
+        this.draw = function (lastPoint){
+            // c.beginPath();
+            // c.arc(this.x, this.y, this.radius, 0, Math.PI*2, false);
+            // c.fillStyle = `rgba(${red}, ${green}, ${blue}, ${this.opacity})`;
+            // c.fill();
+            // c.closePath();
+            c.beginPath();
+            c.strokeStyle = `rgb(${red}, ${green}, ${blue})`;
+            c.lineWidth = this.radius;
+            c.moveTo(lastPoint.x, lastPoint.y);
+            c.lineTo(this.x, this.y);
+            c.stroke();
+            c.closePath();
+        }
+
+        this.update = function () {
+            const lastPoint = {x:this.x, y:this.y};
+            
+            //move points over time
+            this.radians += this.velocity;
+
+            //Drag Effect
+            this.lastMouse.x += (mouse.x-this.lastMouse.x) * 0.05;
+            this.lastMouse.y += (mouse.y-this.lastMouse.y) * 0.05;
+
+            //Circular Motion
+            if ((mouse.x==undefined) && (mouse.y==undefined)) {
+                this.x = x + Math.cos(this.radians)*this.traceCos;
+                this.y = y + Math.sin(this.radians)*this.traceSin;
+            }
+            else{
+                this.x = this.lastMouse.x + Math.cos(this.radians)*this.traceCos;
+                this.y = this.lastMouse.y + Math.sin(this.radians)*this.traceSin;
+            }
+            
+            this.draw(lastPoint);
+        }
+    };
+    function animate() {
+        requestAnimationFrame(animate);
+        c.fillStyle = `rgba(255, 255, 255, 0.1)`;
+        c.fillRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(particles => {
+            particles.update();
+        });
+    };
+    function init() {
+        //particles = [];
+        
+        for (let i = 0; i < pCount; i++) {
+            //Colors
+            red = Math.floor(Math.random()*255);
+            green = Math.floor(Math.random()*255);
+            blue = Math.floor(Math.random()*255);
+
+            //Positioning of each particle
+            x = canvas.width/2;
+            y = canvas.height/2;
+            radians = (Math.random()*2) + 1;
+            velocity = Math.random()*0.08 + 0.02;
+            traceCos = traceSin = Math.random()*70 + 50;
+            // console.log(`Mouse.x: ${mouse.x}`);
+            // console.log(`Mouse.y: ${mouse.y}`);
+
+            //Create new particle
+            let temp_radians = radians;
+            let temp_opacity = opacity;
+            particles.push(new Particle(x, y, radius, temp_radians, velocity, traceCos, traceSin, red, green, blue, temp_opacity));
+        }
+    };
+
+    //Start of Programm
+    init();
+    animate();
+</script>
+</html>
